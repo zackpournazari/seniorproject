@@ -1,127 +1,155 @@
-/**
- * Basic example demonstrating passport-steam usage within Express framework
- */
-var express = require('express')
-  , passport = require('passport')
-  , util = require('util')
-  , session = require('express-session')
-  , SteamStrategy = require('../../').Strategy
+// How do I use the Steam API in my web app?
+// ====================
+// 
+// You're a new developer working with web technologies.  You're competent
+// in Javascript, though you might or might not be a “[ninja]”,
+// and you've been learning some [Angular], [Ember], or maybe [jQuery].
+// 
+// [angular]: https://angularjs.org
+// [ember]: http://emberjs.com
+// [ninja]: https://www.manning.com/books/secrets-of-the-javascript-ninja
+// [jQuery]: https://jquery.com
+// 
+// Now you want to start making an app that deals with “real” data, but all
+// the cool kids are babbling about APIs and keys and routes and CORS,
+// but you just want to make something cool and **WHY IS CROSS-ORIGIN POLICY
+// SO HARD**?
+// 
+// I'll strip the jargon off and get you back on track.
+// 
+// Knowledge required:
+// 
+//  - basic command line (`mkdir`, `cd`, `ls`, `node server.js`)
+// 
+// Software required:
+// 
+// - [node]
+// - [npm]
+// - any web browser
+// 
+// Software recommended:
+// 
+// - [Postman] \(alternative: `curl`)
+// 
+// [node]: https://nodejs.org
+// [npm]: https://www.npmjs.com
+// [Postman]: https://www.getpostman.com
+// 
+// 
+// Follow along
+// ------------
+// To try out the examples as you read along, live:
+// 
+// 1.  Make a folder somewhere,
+// 2.  [Download and Save this file]
+//     (https://gist.github.com/johnchristopherjones/c6c8928d2ffa5ccbda6a) as
+//     `server.js` in the new folder.
+// 3.  Open a terminal and `cd` to the new folder.
+// 4.  Type `npm install express request` to install `express` and
+//     `request` locally
+// 5.  Type `node server.js` to start the server.
+// 6.  Try opening URLs mentioned below in your browser.
+// 
+// To stop the server, return to the terminal and type `⌃C` (control-c)
+// in the terminal.
+// 
+// To make changes to the server, edit server.js.  Stop the server with `⌃C`
+// and start it up again with `node server.js`.
+// 
+// 
+// Steam API
+// ---------
+// For this example we're going to learn how to work with the Steam API. This
+// API has a couple of frustrating features:
+// 
+//   - The [Steam API] does not allow cross-origin requests.
+//   - The Steam API requires an [API key] for many requests, and you have to
+//     keep it secret.
+// 
+// Well, isn't that special?  Just what are you supposed to do with that?
+// 
+// First, the bad news.  You need to write a server.  You can't get around the
+// cross-origin policy restriction.  Not only that, but once you get that
+// API key (whatever that is), you need to keep it secret, so you can't include
+// it in code you deliver to the web browser.
+// 
+// The good news is that "a server" is one of those scary overblown words
+// like "source code".  I'm sure there was a time for you when "source code"
+// was an intimidating word.  Now it's just a kinda-descriptive word for
+// certain kinds of text files.  We're about to do that to "server".
+// 
+// [Steam API]: http://steamcommunity.com/dev
+// [API key]: https://steamcommunity.com/dev/apikey
+// 
+// 
+// What's an API key?
+// ------------------
+// An API key is basically a password.  Without a valid key, the server that hosts
+// the API will simply refuse to answer your requests.  There are a number of
+// reasons API providers should do this:
+// 
+// 1. Parts of the API can be privileged to certain API keys (e.g., write
+//    permission for internal servers).
+// 2. If a specific API user (identified by their API key) is abusing the server
+//    then the server can just temporarily or permanently revoke that one key to
+//    preserve server performance for everyone else.
+// 3. If a specific API user abuses the terms of service of the API, the server
+//    can revoke access to that user regardless of their IP address or hostname
+//    or any other easily spoofable information.
+// 
+// In the examples that follow you'll need to replace 45189DA008A4684CF106ADDF8659BD25 with
+// your Steam API key.
+// 
+// 
+// ### Get your Steam API Key
+// 
+// Just go to the Steam [API Key] page and sign up.  It's a shockingly painless
+// process.  Once you've got your key, keep it in a safe spot and never share it
+// with anyone.  That means keeping it out of Github.
+// 
+// 
+// Get started
+// ---------------
+// All of the code you'll see belongs in a single javascript file,
+// which we'll call `server.js`.
+// 
+// By convention, you want to put all your 'require' statements at the top.
+// However, to avoid introducing too much detail prematurely, I will only
+// require packages as they are needed.
+// 
+// We're going to want an HTTP server.  The HTTP server will receive
+// incoming HTTP requests from browsers and send an HTTP responses in return.
+// 
+// HTTP is a simple protocol composed entirely of text.  However, we're going
+// to side-step a lot of tedious text manipulation by using [Express],
+// which wraps HTTP up into familiar Javascript objects and events.
+// 
+// [Express]: http://expressjs.com
+// 
+// ```js
 
-var SteamApi = require('steam-api');
+var express = require('express');
 
-var optionalSteamId = 76561198064189386;
-var appId = 294100;
-var user = new SteamApi.User('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var userStats = new SteamApi.UserStats('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var news = new SteamApi.News('45189DA008A4684CF106ADDF8659BD25');
-var app = new SteamApi.App('45189DA008A4684CF106ADDF8659BD25');
-var player = new SteamApi.Player('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var inventory = new SteamApi.Inventory('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var items = new SteamApi.Items('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-// Passport session setup.
-//   To support persistent login sessions, Passport needs to be able to
-//   serialize users into and deserialize users out of the session.  Typically,
-//   this will be as simple as storing the user ID when serializing, and finding
-//   the user by ID when deserializing.  However, since this example does not
-//   have a database of user records, the complete Steam profile is serialized
-//   and deserialized.
-passport.serializeUser(function(user, done) {
-  done(null, user);
-});
-
-passport.deserializeUser(function(obj, done) {
-  done(null, obj);
-});
-
-// Use the SteamStrategy within Passport.
-//   Strategies in passport require a `validate` function, which accept
-//   credentials (in this case, an OpenID identifier and profile), and invoke a
-//   callback with a user object.
-passport.use(new SteamStrategy({
-    returnURL: 'http://localhost:3000/auth/steam/return',
-    realm: 'http://localhost:3000/',
-    apiKey: '45189DA008A4684CF106ADDF8659BD25'
-  },
-  function(identifier, profile, done) {
-    // asynchronous verification, for effect...
-    process.nextTick(function () {
-
-      // To keep the example simple, the user's Steam profile is returned to
-      // represent the logged-in user.  In a typical application, you would want
-      // to associate the Steam account with a user record in your database,
-      // and return that user instead.
-      profile.identifier = identifier;
-      return done(null, profile);
-    });
-  }
-));
+// ```
+// 
+// Create an Express server (not yet running) so we can configure it.  At the end, we'll make the server run with `app.listen()`.
+// 
+// ```js
 
 var app = express();
 
-// configure Express
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+// ```
+// 
+// Express lets you deal with HTTP in an event-driven way, like
+// DOM events in the browser.  Similar to jQuery's `.click()` method, the
+// `.get()` method lets you bind an event handler to an HTTP GET request event.
+// 
+// However, the `.get()` method is a little more powerful.  It lets you bind
+// different event handlers for different URLs.  For example, the following
+// handler responds to GET requests for the root-level URL (e.g., index.html).
+// 
+// ```js
 
-app.use(session({
-    secret: 'your secret',
-    name: 'name of session id',
-    resave: true,
-    saveUninitialized: true}));
-
-// Initialize Passport!  Also use passport.session() middleware, to support
-// persistent login sessions (recommended).
-app.use(passport.initialize());
-app.use(passport.session());
-app.use(express.static(__dirname + '/../../public'));
-
-app.get('/', function(req, res){
-  res.render('index', { user: req.user });
-});
-
-app.get('/account', ensureAuthenticated, function(req, res){
-  res.render('account', { user: req.user });
-});
-
-app.get('/logout', function(req, res){
-  req.logout();
-  res.redirect('/');
-});
-
-// GET /auth/steam
-//   Use passport.authenticate() as route middleware to authenticate the
-//   request.  The first step in Steam authentication will involve redirecting
-//   the user to steamcommunity.com.  After authenticating, Steam will redirect the
-//   user back to this application at /auth/steam/return
-app.get('/auth/steam',
-  passport.authenticate('steam', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  });
-
-// GET /auth/steam/return
-//   Use passport.authenticate() as route middleware to authenticate the
-//   request.  If authentication fails, the user will be redirected back to the
-//   login page.  Otherwise, the primary route function function will be called,
-//   which, in this example, will redirect the user to the home page.
-app.get('/auth/steam/return',
-  passport.authenticate('steam', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  });
-
-app.listen(3000);
-
-// Simple route middleware to ensure user is authenticated.
-//   Use this route middleware on any resource that needs to be protected.  If
-//   the request is authenticated (typically via a persistent login session),
-//   the request will proceed.  Otherwise, the user will be redirected to the
-//   login page.
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { return next(); }
-  res.redirect('/');
-}
-
-/////////////////////////////////////////////////////////////////////BELOW THIS POINT IS THE ACHIEVEMENT CODE
 app.get('/', function(httpRequest, httpResponse) {
     httpResponse.send('Hello, World!');
 });
@@ -197,24 +225,8 @@ var request = require('request');
 // 
 // ```js
 
-var userId = '76561198040531349';//Zack's Steam ID
-
 var url = 'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/' +
     'v2/?key=45189DA008A4684CF106ADDF8659BD25&appid=400';
-
-var url2 =  'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=76561198040531349';//player summary, zack id
-var url3 =  'http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=440&key=45189DA008A4684CF106ADDF8659BD25&steamid=76561198040531349';//achievements
-var url4 =  ' http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=45189DA008A4684CF106ADDF8659BD25&steamid=76561198040531349&format=json';//owned games
-var url5 =  'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + userId;//player summary, open id
-console.log(userId);
-
-user.GetFriendList(optionalRelationship = 'all', userId).done(function(result){
-  console.log(result);
-});
-
-user.GetFriendList(optionalRelationship = 'all', optionalSteamId).done(function(result){
-  console.log(result);
-});
 
 // ```
 // 
@@ -237,16 +249,16 @@ request.get(url, function(error, steamHttpResponse, steamHttpBody) {
 // to send our own HTTP requests to third parties.  We can use the third-party's
 // response to help construct our own response.
 // 
-// Open a web browser to [http://localhost:4000/stuff]
+// Open a web browser to [http://localhost:4000/steam/civ5achievements]
 // (http://localhost:4000/steam/civ5achievements).
 // 
 // ```js
 
-app.get('/stuff', function(httpRequest, httpResponse) {
+app.get('/steam/civ5achievements', function(httpRequest, httpResponse) {
     // Calculate the Steam API URL we want to use
     var url = 'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/' +
         'v2/?key=45189DA008A4684CF106ADDF8659BD25&appid=400';
-    request.get(url4, function(error, steamHttpResponse, steamHttpBody) {
+    request.get(url, function(error, steamHttpResponse, steamHttpBody) {
         // Once we get the body of the steamHttpResponse, send it to our client
         // as our own httpResponse
         httpResponse.setHeader('Content-Type', 'application/json');

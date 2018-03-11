@@ -32,6 +32,7 @@
   "main": "./lib/passport-steam",
   "dependencies": {
     "passport-openid": "^0.4.0",
+    "steam-api": "^1.1.3",
     "steam-web": "0.4.0"
   },
   "devDependencies": {
