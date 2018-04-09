@@ -11,13 +11,17 @@ var SteamApi = require('steam-api');
 
 var optionalSteamId = 76561198064189386;
 var appId = 294100;
-var user = new SteamApi.User('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var userStats = new SteamApi.UserStats('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var news = new SteamApi.News('45189DA008A4684CF106ADDF8659BD25');
-var app = new SteamApi.App('45189DA008A4684CF106ADDF8659BD25');
-var player = new SteamApi.Player('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var inventory = new SteamApi.Inventory('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
-var items = new SteamApi.Items('45189DA008A4684CF106ADDF8659BD25', optionalSteamId);
+var apiKey= '45189DA008A4684CF106ADDF8659BD25';
+var user = new SteamApi.User(apiKey, optionalSteamId);
+var userStats = new SteamApi.UserStats(apiKey, optionalSteamId);
+var news = new SteamApi.News(apiKey);
+var app = new SteamApi.App(apiKey);
+var player = new SteamApi.Player(apiKey, optionalSteamId);
+var inventory = new SteamApi.Inventory(apiKey, optionalSteamId);
+var items = new SteamApi.Items(apiKey, optionalSteamId);
+var request = require('request');
+
+
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
 //   serialize users into and deserialize users out of the session.  Typically,
@@ -35,11 +39,11 @@ passport.deserializeUser(function(obj, done) {
 
 // Use the SteamStrategy within Passport.
 //   Strategies in passport require a `validate` function, which accept
-//   credentials (in this case, an OpenID identifier and profile), and invoke a
+//   credentials (in this case, an OpenID identifier and profile), and 	invoke a
 //   callback with a user object.
 passport.use(new SteamStrategy({
-    returnURL: 'http://localhost:3000/auth/steam/return',
-    realm: 'http://localhost:3000/',
+    returnURL: 'http://localhost:4000/auth/steam/return',
+    realm: 'http://localhost:4000/',
     apiKey: '45189DA008A4684CF106ADDF8659BD25'
   },
   function(identifier, profile, done) {
@@ -57,6 +61,8 @@ passport.use(new SteamStrategy({
 ));
 
 var app = express();
+
+var userCode;
 
 // configure Express
 app.set('views', __dirname + '/views');
@@ -80,6 +86,47 @@ app.get('/', function(req, res){
 
 app.get('/account', ensureAuthenticated, function(req, res){
   res.render('account', { user: req.user });
+});
+
+var test;
+var url;
+var friendUrl;
+var listOGames;
+
+app.get('/account/friends', ensureAuthenticated, function(req, res){
+  //res.send(req.user.id);
+  //url = ' http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + apiKey '&steamids=' +
+  //      req.user.id;
+  friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + req.user.id + '&relationship=friend'
+  test = "" + req.user.id;
+
+  listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + test +'&format=json';
+  console.log(test);
+  console.log(listOGames);
+  console.log("Here000");
+  console.log(friendUrl);
+  res.redirect('/account/friendsList');
+});
+
+app.get('/account/ListOfGames', ensureAuthenticated, function(req, res){
+  url = ' http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + apiKey + '&steamids=' + req.user.id;
+  friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + req.user.id + '&relationship=friend'
+  request.get(listOGames, function(error, steamHttpResponse, steamHttpBody) {
+        // Once we get the body of the steamHttpResponse, send it to our client
+        // as our own httpResponse
+        res.setHeader('Content-Type', 'application/json');
+        res.send(steamHttpBody);
+    });
+});
+
+app.get('/account/friendsList', function(httpRequest, httpResponse) {
+    // Calculate the Steam API URL we want to use
+    request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
+        // Once we get the body of the steamHttpResponse, send it to our client
+        // as our own httpResponse
+        httpResponse.setHeader('Content-Type', 'application/json');
+        httpResponse.send(steamHttpBody);
+    });
 });
 
 app.get('/logout', function(req, res){
@@ -119,7 +166,7 @@ app.listen(3000);
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { return next(); }
   res.redirect('/');
-}
+};
 
 /////////////////////////////////////////////////////////////////////BELOW THIS POINT IS THE ACHIEVEMENT CODE
 app.get('/', function(httpRequest, httpResponse) {
@@ -166,7 +213,7 @@ app.post('/hello-frank', function(httpRequest, httpResponse) {
 // Add parameters to the path
 // --------------------------
 // Express also lets us define variables in the path.  These variables
-// will be stored by Express in the `httpRequest.params` object.
+// will be stored by Express in the `httpRequest.p+arams` object.
 // We can then use those variables to construct a response.
 // Open a web browser to [http://localhost:4000/steam/hello/Rachel]
 // (http://localhost:4000/steam/hello/Rachel).
@@ -189,7 +236,7 @@ app.get('/hello/:name', function(httpRequest, httpResponse) {
 // 
 // ```js
 
-var request = require('request');
+//var request = require('request');
 
 // ```
 // 
@@ -204,16 +251,30 @@ var url = 'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/' +
 
 var url2 =  'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=76561198040531349';//player summary, zack id
 var url3 =  'http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=440&key=45189DA008A4684CF106ADDF8659BD25&steamid=76561198040531349';//achievements
-var url4 =  ' http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=45189DA008A4684CF106ADDF8659BD25&steamid=76561198040531349&format=json';//owned games
+var url4 =  'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=45189DA008A4684CF106ADDF8659BD25&steamid=76561198040531349&format=json';//owned games
 var url5 =  'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + userId;//player summary, open id
-console.log(userId);
+
+var friendList;
 
 user.GetFriendList(optionalRelationship = 'all', userId).done(function(result){
-  console.log(result);
+  //console.log(result);
+  friendList = result;
+
+  //console.log("test");
+
+  //var myObj = JSON.parse(result);
+
+  //var friends = myObj.player.personaName;
+  //console.log(friends);
+
+});
+
+app.get('/account/friends', function(httpRequest, httpResponse) {
+ //   httpResponse.send(friendList);
 });
 
 user.GetFriendList(optionalRelationship = 'all', optionalSteamId).done(function(result){
-  console.log(result);
+ // console.log(result);
 });
 
 // ```
@@ -225,6 +286,12 @@ user.GetFriendList(optionalRelationship = 'all', optionalSteamId).done(function(
 request.get(url, function(error, steamHttpResponse, steamHttpBody) {
     // Print to console to prove we downloaded the achievements.
     console.log(steamHttpBody);
+    var myObj = JSON.parse(steamHttpBody);
+
+  var gn = myObj.game.gameName;
+  var gv = myObj.game.gameVersion;	
+  console.log("This is the game "+ gn);
+  console.log("This is the game version "+ gv);
 });
 
 // ```
@@ -264,11 +331,10 @@ app.get('/stuff', function(httpRequest, httpResponse) {
 // 
 // ```js
 
-app.get('/steam/game/:appid/achievements', function(httpRequest, httpResponse) {
+app.get('/steam/game/:steamids/achievements', function(httpRequest, httpResponse) {
     // Calculate the Steam API URL we want to use
-    var url = 'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/' +
-        'v2/?key=45189DA008A4684CF106ADDF8659BD25&appid=' +
-        httpRequest.params.appid;
+    var url = ' http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=XXXXXXXXXXXXXXXXXXXXXXX&steamids=' +
+        httpRequest.params.steamids;
     request.get(url, function(error, steamHttpResponse, steamHttpBody) {
         httpResponse.setHeader('Content-Type', 'application/json');
         httpResponse.send(steamHttpBody);
@@ -337,7 +403,7 @@ app.use('/', express.static('public'));
 // -------------------------
 // What about that httpRequest parameter?  We haven't done much with it yet.
 // Typically HTTP GET requests don't have a body, but that's not the case
-// with POST and PUT.  When a web browser sends new data to the server,
+// with POST and PUT.  When a web browser sends new data to therver,
 // they place that new data in the body of the HTTP POST or HTTP PUT request.
 // 
 // ```js
@@ -363,7 +429,7 @@ app.use(bodyParser.text());
 // ```js
 
 app.post('/frank-blog', function(httpRequest, httpResponse) {
-    console.log(httpRequest.body);
+    //console.log(httpRequest.body);
     // We need to respond to the request so the web browser knows
     // something happened.
     // If you've got nothing better to say, it's considered good practice to
