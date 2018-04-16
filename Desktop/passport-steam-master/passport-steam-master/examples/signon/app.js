@@ -12,13 +12,6 @@ var SteamApi = require('steam-api');
 var optionalSteamId = 76561198064189386;
 var appId = 294100;
 var apiKey= '45189DA008A4684CF106ADDF8659BD25';
-var user = new SteamApi.User(apiKey, optionalSteamId);
-var userStats = new SteamApi.UserStats(apiKey, optionalSteamId);
-var news = new SteamApi.News(apiKey);
-var app = new SteamApi.App(apiKey);
-var player = new SteamApi.Player(apiKey, optionalSteamId);
-var inventory = new SteamApi.Inventory(apiKey, optionalSteamId);
-var items = new SteamApi.Items(apiKey, optionalSteamId);
 var request = require('request');
 
 
@@ -88,7 +81,7 @@ app.get('/account', ensureAuthenticated, function(req, res){
   res.render('account', { user: req.user });
 });
 
-var test;
+var user;
 var url;
 var friendUrl;
 var listOGames;
@@ -98,17 +91,18 @@ app.get('/account/friends', ensureAuthenticated, function(req, res){
   //url = ' http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + apiKey '&steamids=' +
   //      req.user.id;
   friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + req.user.id + '&relationship=friend'
-  test = "" + req.user.id;
+  user = "" + req.user.id;
 
-  listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + test +'&format=json';
-  console.log(test);
+  listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + user +'&format=json';
+  console.log(user);
   console.log(listOGames);
   console.log("Here000");
   console.log(friendUrl);
-  res.redirect('/account/friendsList');
+  res.redirect('/account/friendss');
 });
 
 app.get('/account/ListOfGames', ensureAuthenticated, function(req, res){
+  
   url = ' http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + apiKey + '&steamids=' + req.user.id;
   friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + req.user.id + '&relationship=friend'
   request.get(listOGames, function(error, steamHttpResponse, steamHttpBody) {
@@ -119,14 +113,109 @@ app.get('/account/ListOfGames', ensureAuthenticated, function(req, res){
     });
 });
 
-app.get('/account/friendsList', function(httpRequest, httpResponse) {
+app.get('/account/friendss', function(httpRequest, httpResponse) {
     // Calculate the Steam API URL we want to use
     request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
-        // Once we get the body of the steamHttpResponse, send it to our client
-        // as our own httpResponse
-        httpResponse.setHeader('Content-Type', 'application/json');
-        httpResponse.send(steamHttpBody);
+
+  	var myObj = JSON.parse(steamHttpBody);
+
+  	var i;
+  	var qt;
+  	var playerList = new Array();
+  	var extendedPlayer = new Array();
+
+	for (i = 0; i < myObj.friendslist.friends.length; i++) //this loops through every single friend object that holds the steam id
+	{ 
+    	var friend = myObj.friendslist.friends[i].steamid;
+    	var players = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + friend;//using each steam id i create a url that will take their summaries.
+    	playerList.push(players);//pushes each new players url into an array
+	}
+
+	for(x = 0; x < playerList.length; x++)
+	{
+
+		request.get(playerList[x], function(error, steamHttpResponse, steamHttpBody) //accesses the url for each individual player.
+    		{
+    			qt = steamHttpBody;
+    			 extendedPlayer.push(qt);
+    			 //console.log(steamHttpBody);
+    			//httpResponse.send(steamHttpBody);
+    	});
+    	//extendedPlayer.push(steamHttpBody);
+	}
+
+  	console.log(extendedPlayer);
+
+  	httpResponse.redirect('/account/friendsss')
+
+    });	
+
+});
+
+app.get('/account/friendsss', function(httpRequest, httpResponse) {
+    // Calculate the Steam API URL we want to use
+   	/**
+    request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
+
+  	var myObj = JSON.parse(steamHttpBody);
+
+  	var i;
+  	var playerList = new Array('');
+
+	for (i = 0; i < myObj.friendslist.friends.length; i++) 
+	{ 
+    	var friend = myObj.friendslist.friends[i].steamid;
+    	var players = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + friend;
+
+    	request.get(players, function(error, steamHttpResponse, steamHttpBody) 
+    	{
+    		httpResponse.send(steamHttpBody);
+    		//playerList.push(steamHttpBody);
     });
+
+    	console.log(friend);
+    	playerList.push(steamHttpBody);
+	}
+
+  	console.log(playerList);
+
+  	httpResponse.redirect('/account/friendsList')
+
+    });	
+    **/
+});
+
+app.get('/account/friendsList', function(httpRequest, httpResponse) {
+    // Calculate the Steam API URL we want to use
+   	/**
+    request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
+
+  	var myObj = JSON.parse(steamHttpBody);
+
+  	var i;
+  	var playerList = new Array('');
+
+	for (i = 0; i < myObj.friendslist.friends.length; i++) 
+	{ 
+    	var friend = myObj.friendslist.friends[i].steamid;
+    	var players = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + friend;
+
+    	request.get(players, function(error, steamHttpResponse, steamHttpBody) 
+    	{
+    		httpResponse.send(steamHttpBody);
+    		//playerList.push(steamHttpBody);
+    });
+
+    	console.log(friend);
+    	playerList.push(steamHttpBody);
+	}
+
+  	console.log(playerList);
+
+  	//httpResponse.send(playerList);
+
+    });	
+    **/
 });
 
 app.get('/logout', function(req, res){
@@ -254,44 +343,41 @@ var url3 =  'http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v
 var url4 =  'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=45189DA008A4684CF106ADDF8659BD25&steamid=76561198040531349&format=json';//owned games
 var url5 =  'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + userId;//player summary, open id
 
-var friendList;
-
-user.GetFriendList(optionalRelationship = 'all', userId).done(function(result){
-  //console.log(result);
-  friendList = result;
-
-  //console.log("test");
-
-  //var myObj = JSON.parse(result);
-
-  //var friends = myObj.player.personaName;
-  //console.log(friends);
-
-});
-
-app.get('/account/friends', function(httpRequest, httpResponse) {
- //   httpResponse.send(friendList);
-});
-
-user.GetFriendList(optionalRelationship = 'all', optionalSteamId).done(function(result){
- // console.log(result);
-});
-
 // ```
 // 
 // Note: this is an "outgoing" `get()` rather than Express' "incoming" `get()`.
 // 
 // ```js
 
+
+/**
+friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + userId + '&relationship=friend'
+
+request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
+    // Print to console to prove we downloaded the achievements.
+    console.log(steamHttpBody);
+    var myObj = JSON.parse(steamHttpBody);
+
+  var gn = myObj.friendslist.friends[0].steamid;
+  var gv = "";
+  var ac = "";
+  console.log("First Friend ID is "+ gn);
+  console.log("This is the game version "+ gv);
+  console.log("This is the game version "+ ac);
+});
+**/
+
 request.get(url, function(error, steamHttpResponse, steamHttpBody) {
     // Print to console to prove we downloaded the achievements.
     console.log(steamHttpBody);
     var myObj = JSON.parse(steamHttpBody);
 
-  var gn = myObj.game.gameName;
-  var gv = myObj.game.gameVersion;	
+  var gn = myObj.game["gameName"];
+  var gv = myObj.game.gameVersion;
+  var ac = myObj.game.availableGameStats.achievements[0];
   console.log("This is the game "+ gn);
   console.log("This is the game version "+ gv);
+  console.log("This is the game version "+ ac);
 });
 
 // ```
@@ -308,38 +394,6 @@ request.get(url, function(error, steamHttpResponse, steamHttpBody) {
 // (http://localhost:4000/steam/civ5achievements).
 // 
 // ```js
-
-app.get('/stuff', function(httpRequest, httpResponse) {
-    // Calculate the Steam API URL we want to use
-    var url = 'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/' +
-        'v2/?key=45189DA008A4684CF106ADDF8659BD25&appid=400';
-    request.get(url4, function(error, steamHttpResponse, steamHttpBody) {
-        // Once we get the body of the steamHttpResponse, send it to our client
-        // as our own httpResponse
-        httpResponse.setHeader('Content-Type', 'application/json');
-        httpResponse.send(steamHttpBody);
-    });
-});
-
-// ```
-// 
-// Combine the previous two techniques (variables in paths, request package).
-// 
-// Open a web browser to [http://localhost:4000/steam/game/400/achievements]
-// (http://localhost:4000/steam/game/400/achievements) then try changing `400`
-// (Civ5) to `292030` (Witcher 3).
-// 
-// ```js
-
-app.get('/steam/game/:steamids/achievements', function(httpRequest, httpResponse) {
-    // Calculate the Steam API URL we want to use
-    var url = ' http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=XXXXXXXXXXXXXXXXXXXXXXX&steamids=' +
-        httpRequest.params.steamids;
-    request.get(url, function(error, steamHttpResponse, steamHttpBody) {
-        httpResponse.setHeader('Content-Type', 'application/json');
-        httpResponse.send(steamHttpBody);
-    });
-});
 
 // ```
 // 
@@ -366,8 +420,6 @@ app.get('/steam/game/:steamids/achievements', function(httpRequest, httpResponse
 // (http://localhost:4000/static/index.html).
 // 
 // ```js
-
-app.use('/', express.static('public'));
 
 // ```
 // 
@@ -408,10 +460,6 @@ app.use('/', express.static('public'));
 // 
 // ```js
 
-var bodyParser = require('body-parser');
-
-app.use(bodyParser.text());
-
 // ```
 // 
 // You'll need to use Postman to test out this example, because web browsers
@@ -427,15 +475,6 @@ app.use(bodyParser.text());
 // in the body, then send the request.
 // 
 // ```js
-
-app.post('/frank-blog', function(httpRequest, httpResponse) {
-    //console.log(httpRequest.body);
-    // We need to respond to the request so the web browser knows
-    // something happened.
-    // If you've got nothing better to say, it's considered good practice to
-    // return the original POST body.
-    httpResponse.status(200).send('Posted today:\n\n' + httpRequest.body);
-});
 
 // ```
 // 
