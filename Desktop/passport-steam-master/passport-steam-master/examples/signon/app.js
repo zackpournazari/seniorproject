@@ -1,18 +1,18 @@
 /**
  * Basic example demonstrating passport-steam usage within Express framework
  */
-var express = require('express')
-  , passport = require('passport')
-  , util = require('util')
-  , session = require('express-session')
-  , SteamStrategy = require('../../').Strategy
+ var express = require('express')
+ , passport = require('passport')
+ , util = require('util')
+ , session = require('express-session')
+ , SteamStrategy = require('../../').Strategy
 
-var SteamApi = require('steam-api');
+ var SteamApi = require('steam-api');
 
-var optionalSteamId = 76561198064189386;
-var appId = 294100;
-var apiKey= '45189DA008A4684CF106ADDF8659BD25';
-var request = require('request');
+ var optionalSteamId = 76561198064189386;
+ var appId = 294100;
+ var apiKey= '45189DA008A4684CF106ADDF8659BD25';
+ var request = require('request');
 
 
 // Passport session setup.
@@ -23,11 +23,11 @@ var request = require('request');
 //   have a database of user records, the complete Steam profile is serialized
 //   and deserialized.
 passport.serializeUser(function(user, done) {
-  done(null, user);
+	done(null, user);
 });
 
 passport.deserializeUser(function(obj, done) {
-  done(null, obj);
+	done(null, obj);
 });
 
 // Use the SteamStrategy within Passport.
@@ -35,11 +35,11 @@ passport.deserializeUser(function(obj, done) {
 //   credentials (in this case, an OpenID identifier and profile), and 	invoke a
 //   callback with a user object.
 passport.use(new SteamStrategy({
-    returnURL: 'http://localhost:4000/auth/steam/return',
-    realm: 'http://localhost:4000/',
-    apiKey: '45189DA008A4684CF106ADDF8659BD25'
-  },
-  function(identifier, profile, done) {
+	returnURL: 'http://localhost:4000/auth/steam/return',
+	realm: 'http://localhost:4000/',
+	apiKey: '45189DA008A4684CF106ADDF8659BD25'
+},
+function(identifier, profile, done) {
     // asynchronous verification, for effect...
     process.nextTick(function () {
 
@@ -49,8 +49,8 @@ passport.use(new SteamStrategy({
       // and return that user instead.
       profile.identifier = identifier;
       return done(null, profile);
-    });
-  }
+  });
+}
 ));
 
 var app = express();
@@ -62,10 +62,10 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
 app.use(session({
-    secret: 'your secret',
-    name: 'name of session id',
-    resave: true,
-    saveUninitialized: true}));
+	secret: 'your secret',
+	name: 'name of session id',
+	resave: true,
+	saveUninitialized: true}));
 
 // Initialize Passport!  Also use passport.session() middleware, to support
 // persistent login sessions (recommended).
@@ -74,11 +74,11 @@ app.use(passport.session());
 app.use(express.static(__dirname + '/../../public'));
 
 app.get('/', function(req, res){
-  res.render('index', { user: req.user });
+	res.render('index', { user: req.user });
 });
 
 app.get('/account', ensureAuthenticated, function(req, res){
-  res.render('account', { user: req.user });
+	res.render('account', { user: req.user });
 });
 
 var user;
@@ -93,135 +93,106 @@ app.get('/account/friends', ensureAuthenticated, function(req, res){
   friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + req.user.id + '&relationship=friend'
   user = "" + req.user.id;
 
-  listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + user +'&format=json';
-  console.log(user);
-  console.log(listOGames);
-  console.log("Here000");
-  console.log(friendUrl);
+  listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + req.user.id +'&format=json';
   res.redirect('/account/friendss');
 });
 
-app.get('/account/ListOfGames', ensureAuthenticated, function(req, res){
-  
-  url = ' http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + apiKey + '&steamids=' + req.user.id;
-  friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + req.user.id + '&relationship=friend'
-  request.get(listOGames, function(error, steamHttpResponse, steamHttpBody) {
-        // Once we get the body of the steamHttpResponse, send it to our client
-        // as our own httpResponse
-        res.setHeader('Content-Type', 'application/json');
-        res.send(steamHttpBody);
-    });
-});
+var qt;
+var playerList = new Array();
+var extendedPlayer = new Array();
 
 app.get('/account/friendss', function(httpRequest, httpResponse) {
     // Calculate the Steam API URL we want to use
     request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
 
-  	var myObj = JSON.parse(steamHttpBody);
+    	var myObj = JSON.parse(steamHttpBody);
 
-  	var i;
-  	var qt;
-  	var playerList = new Array();
-  	var extendedPlayer = new Array();
+    	var i;
 
 	for (i = 0; i < myObj.friendslist.friends.length; i++) //this loops through every single friend object that holds the steam id
-	{ 
-    	var friend = myObj.friendslist.friends[i].steamid;
-    	var players = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + friend;//using each steam id i create a url that will take their summaries.
-    	playerList.push(players);//pushes each new players url into an array
-	}
-
-	for(x = 0; x < playerList.length; x++)
 	{
+		var friend = myObj.friendslist.friends[i].steamid;
+    	var players = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + apiKey + '&steamids=' + friend;//using each steam id i create a url that will take their summaries.
+    	playerList.push(players);//pushes each new players url into an array
+    }
+    extendedPlayer[0] = '[{"response":{"players":[{"steamid":"76561197979963546","communityvisibilitystate":3,"profilestate":1,"personaname":"Bleach Cocktail","lastlogoff":1523598056,"profileurl":"https://steamcommunity.com/id/bob31495/","avatar":"https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/66/66306d8e73b423119bb2a57d0b9d7ca0ad4de229.jpg","avatarmedium":"https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/66/66306d8e73b423119bb2a57d0b9d7ca0ad4de229_medium.jpg","avatarfull":"https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/66/66306d8e73b423119bb2a57d0b9d7ca0ad4de229_full.jpg","personastate":4,"realname":"austin levy","primaryclanid":"103582791429524891","timecreated":1135529772,"personastateflags":0,"loccountrycode":"US","locstatecode":"OH"}]}}';
 
-		request.get(playerList[x], function(error, steamHttpResponse, steamHttpBody) //accesses the url for each individual player.
-    		{
-    			qt = steamHttpBody;
-    			 extendedPlayer.push(qt);
-    			 //console.log(steamHttpBody);
-    			//httpResponse.send(steamHttpBody);
-    	});
-    	//extendedPlayer.push(steamHttpBody);
-	}
+    httpResponse.redirect('/account/friendsss')
 
-  	console.log(extendedPlayer);
-
-  	httpResponse.redirect('/account/friendsss')
-
-    });	
+});	
 
 });
+
 
 app.get('/account/friendsss', function(httpRequest, httpResponse) {
     // Calculate the Steam API URL we want to use
-   	/**
-    request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
+    for(x = 0; x < playerList.length; x++)
+    {
 
-  	var myObj = JSON.parse(steamHttpBody);
-
-  	var i;
-  	var playerList = new Array('');
-
-	for (i = 0; i < myObj.friendslist.friends.length; i++) 
-	{ 
-    	var friend = myObj.friendslist.friends[i].steamid;
-    	var players = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + friend;
-
-    	request.get(players, function(error, steamHttpResponse, steamHttpBody) 
-    	{
-    		httpResponse.send(steamHttpBody);
-    		//playerList.push(steamHttpBody);
-    });
-
-    	console.log(friend);
-    	playerList.push(steamHttpBody);
+		request.get(playerList[x], function(error, steamHttpResponse, steamHttpBody) //accesses the url for each individual player.
+		{
+			qt = steamHttpBody;
+    			//extendedPlayer[0] = qt;
+    			extendedPlayer.push(qt);
+    			//console.log(qt);
+    			console.log(extendedPlayer);
+    		});
 	}
 
-  	console.log(playerList);
-
-  	httpResponse.redirect('/account/friendsList')
-
-    });	
-    **/
+	httpResponse.redirect('/account/friendsList')
 });
 
 app.get('/account/friendsList', function(httpRequest, httpResponse) {
-    // Calculate the Steam API URL we want to use
-   	/**
-    request.get(friendUrl, function(error, steamHttpResponse, steamHttpBody) {
+    // Calculate the Steam API URL we want to use\
+    
+    httpResponse.send('Hello World');
+});
 
-  	var myObj = JSON.parse(steamHttpBody);
+var gameList = new Array();
+var gameidList = new Array();
+var extendedGameList = new Array();
+var gameCount;
 
-  	var i;
-  	var playerList = new Array('');
+app.get('/account/gamelist', ensureAuthenticated, function(req, res){
+	listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + req.user.id +'&include_appinfo=1&format=json';
 
-	for (i = 0; i < myObj.friendslist.friends.length; i++) 
-	{ 
-    	var friend = myObj.friendslist.friends[i].steamid;
-    	var players = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=' + friend;
+	request.get(listOGames, function(error, steamHttpResponse, steamHttpBody) {
+        // Once we get the body of the steamHttpResponse, send it to our client
+        // as our own httpResponse
+        var myObj = JSON.parse(steamHttpBody);
+        gameCount = myObj.response.game_count;
 
-    	request.get(players, function(error, steamHttpResponse, steamHttpBody) 
-    	{
-    		httpResponse.send(steamHttpBody);
-    		//playerList.push(steamHttpBody);
+        var z = 0;
+        for (z; z < gameCount; z++)
+        {
+        	var gameId = myObj.response.games[z].appid;
+        	var gameTitle = myObj.response.games[z].name;
+        	gameidList.push(gameId);
+        	gameList.push(gameTitle);
+        }
+        console.log(gameCount);
+        console.log(gameId);
+        console.log(gameidList);
+        console.log(gameList);
+        res.redirect('/account/Listgames');
+    });
+});
+
+app.get('/account/Listgames', ensureAuthenticated, function(req, res){
+	listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + req.user.id +'&format=json';
+        res.redirect('/account/ListOfGames');
     });
 
-    	console.log(friend);
-    	playerList.push(steamHttpBody);
-	}
+app.get('/account/ListOfGames', ensureAuthenticated, function(req, res){
 
-  	console.log(playerList);
+        //console.log(extendedGameList);
+        res.send(gameList);
+    });
 
-  	//httpResponse.send(playerList);
-
-    });	
-    **/
-});
-
-app.get('/logout', function(req, res){
-  req.logout();
-  res.redirect('/');
-});
+	app.get('/logout', function(req, res){
+		req.logout();
+		res.redirect('/');
+	});
 
 // GET /auth/steam
 //   Use passport.authenticate() as route middleware to authenticate the
@@ -229,10 +200,10 @@ app.get('/logout', function(req, res){
 //   the user to steamcommunity.com.  After authenticating, Steam will redirect the
 //   user back to this application at /auth/steam/return
 app.get('/auth/steam',
-  passport.authenticate('steam', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  });
+	passport.authenticate('steam', { failureRedirect: '/' }),
+	function(req, res) {
+		res.redirect('/');
+	});
 
 // GET /auth/steam/return
 //   Use passport.authenticate() as route middleware to authenticate the
@@ -240,10 +211,10 @@ app.get('/auth/steam',
 //   login page.  Otherwise, the primary route function function will be called,
 //   which, in this example, will redirect the user to the home page.
 app.get('/auth/steam/return',
-  passport.authenticate('steam', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  });
+	passport.authenticate('steam', { failureRedirect: '/' }),
+	function(req, res) {
+		res.redirect('/');
+	});
 
 app.listen(3000);
 
@@ -253,13 +224,13 @@ app.listen(3000);
 //   the request will proceed.  Otherwise, the user will be redirected to the
 //   login page.
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { return next(); }
-  res.redirect('/');
+	if (req.isAuthenticated()) { return next(); }
+	res.redirect('/');
 };
 
 /////////////////////////////////////////////////////////////////////BELOW THIS POINT IS THE ACHIEVEMENT CODE
 app.get('/', function(httpRequest, httpResponse) {
-    httpResponse.send('Hello, World!');
+	httpResponse.send('Hello, World!');
 });
 
 // ```
@@ -276,7 +247,7 @@ app.get('/', function(httpRequest, httpResponse) {
 // ```js
 
 app.get('/hello-frank', function(httpRequest, httpResponse) {
-    httpResponse.send('Hello, Frank.');
+	httpResponse.send('Hello, Frank.');
 });
 
 // ```
@@ -293,7 +264,7 @@ app.get('/hello-frank', function(httpRequest, httpResponse) {
 // ```js
 
 app.post('/hello-frank', function(httpRequest, httpResponse) {
-    httpResponse.send("No, Frank. You're not allowed to post.");
+	httpResponse.send("No, Frank. You're not allowed to post.");
 });
 
 // ```
@@ -312,8 +283,8 @@ app.post('/hello-frank', function(httpRequest, httpResponse) {
 // ```js
 
 app.get('/hello/:name', function(httpRequest, httpResponse) {
-    var name = httpRequest.params.name;
-    httpResponse.send('Hello, ' + name + '!');
+	var name = httpRequest.params.name;
+	httpResponse.send('Hello, ' + name + '!');
 });
 
 // ```
@@ -336,7 +307,7 @@ app.get('/hello/:name', function(httpRequest, httpResponse) {
 var userId = '76561198040531349';//Zack's Steam ID
 
 var url = 'http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/' +
-    'v2/?key=45189DA008A4684CF106ADDF8659BD25&appid=400';
+'v2/?key=45189DA008A4684CF106ADDF8659BD25&appid=400';
 
 var url2 =  'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=45189DA008A4684CF106ADDF8659BD25&steamids=76561198040531349';//player summary, zack id
 var url3 =  'http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=440&key=45189DA008A4684CF106ADDF8659BD25&steamid=76561198040531349';//achievements
@@ -372,12 +343,12 @@ request.get(url, function(error, steamHttpResponse, steamHttpBody) {
     console.log(steamHttpBody);
     var myObj = JSON.parse(steamHttpBody);
 
-  var gn = myObj.game["gameName"];
-  var gv = myObj.game.gameVersion;
-  var ac = myObj.game.availableGameStats.achievements[0];
-  console.log("This is the game "+ gn);
-  console.log("This is the game version "+ gv);
-  console.log("This is the game version "+ ac);
+    var gn = myObj.game["gameName"];
+    var gv = myObj.game.gameVersion;
+    var ac = myObj.game.availableGameStats.achievements[0];
+    console.log("This is the game "+ gn);
+    console.log("This is the game version "+ gv);
+    console.log("This is the game version "+ ac);
 });
 
 // ```
