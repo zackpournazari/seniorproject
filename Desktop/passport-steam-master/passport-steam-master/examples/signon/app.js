@@ -78,6 +78,7 @@
 	res.render('account', { user: req.user });
 	});
 
+	var passedUser;
 	var user;
 	var url;
 	var friendUrl;
@@ -89,6 +90,10 @@
 	//      req.user.id;
 	friendUrl = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + apiKey + '&steamid=' + req.user.id + '&relationship=friend'
 	user = "" + req.user.id;
+	passedUser = req.user.id;
+
+	console.log(user);
+	console.log(passedUser);
 
 	listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + req.user.id +'&format=json';
 	res.redirect('/account/friendss');
@@ -97,7 +102,7 @@
 	var playerList = new Array();
 	var extendedPlayer = new Array();
 	var personas = new Array();
-	var test = '';
+
 
 	app.get('/account/friendss', function(httpRequest, httpResponse) {
 	// Calculate the Steam API URL we want to use
@@ -115,8 +120,6 @@
 
 	}
 
-	httpResponse.redirect('/account/friendsss')
-
 		for(x = 0; x < playerList.length; x++)
 		{
 
@@ -125,11 +128,14 @@
 				var fObj = JSON.parse(steamHttpBody);
 				var friendName = fObj.response.players[0].personaname;
 				personas.push(friendName);
-				test = '' + friendName;
-				console.log(test);
-				console.log(friendName);
+				console.log(personas);
+				if(personas.length == playerList.length)
+				{httpResponse.send(personas);}
 			});
+			//personas.push(friendName);
+			//console.log(personas);
 		}
+		//console.log(personas);
 
 	});	
 
@@ -145,8 +151,8 @@
 
 	app.get('/account/friendsList', function(httpRequest, httpResponse) {
 
-	//httpResponse.send('iight bet');
-	httpResponse.send(test);
+	httpResponse.send(personas);
+	//httpResponse.send(test);
 	});
 
 	var gameList = new Array();
