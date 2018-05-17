@@ -61,6 +61,7 @@
 	var app = express();
 
 	var userCode;
+	var data;
 
 	// configure Express
 	app.set('views', __dirname + '/views');
@@ -87,14 +88,21 @@
 	app.get('/', function(req, res){
 		personanames = [];
 		gameList = [];
-		res.render('index', { user: req.user });
+		res.render('index', { user: req.user});
 	});
 
 	app.get('/account', ensureAuthenticated, function(req, res){
 
 		personanames = [];
 		gameList = [];
-		res.render('account', { user: req.user, playerinfo: req.user.id });
+		s.getSteamLevel({
+			steamid: req.user.id,
+			callback: function(err, data) {
+				console.log(data.response.player_level);
+				res.render('account', { user: req.user, playerinfo: data.response.player_level });
+			}
+		})    
+		//res.render('account', { user: req.user, playerinfo: data });
 	});
 
 	app.get('/account/back', ensureAuthenticated, function(req, res){
@@ -110,11 +118,10 @@
 	//this gets the friend list of the current user
 	//uses a loop to get all friend ids then checks the user information of them
 	//and renders a webpage using the friendname information.
-		s.getFriendList({
-			steamid: req.user.id ,
+	s.getFriendList({
+		steamid: req.user.id ,
   relationship: 'friend', //'all' or 'friend'
   callback: function(err,data) {
-  	var myJson;
   	var ids = new Array();
   	var length = data.friendslist.friends.length;
   	for(var x = 0; x < length; x++)
@@ -133,13 +140,14 @@
   	})
   },
 })
-	});	
+});	
 
 
 	var gameList = new Array();
 	var gameidList = new Array();
 	var extendedGameList = new Array();
 	var gameCount;
+	var acheive = new Array();
 
 	app.get('/account/gamelist', ensureAuthenticated, function(req, res){
 		listOGames = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + apiKey + '&steamid=' + req.user.id +'&include_appinfo=1&format=json';
@@ -159,6 +167,29 @@
 	    	gameidList.push(gameId);
 	    	gameList.push(gameTitle);
 	    }
+
+/**
+	    s.getOwnedGames({
+	    	steamid: req.user.id,
+	    	callback: function(err,data) {
+				var gameIds = new Array();
+	    		for(var x = 0; x < gameCount; x++)
+  					gameIds.push(data.friendslist.friends[x].steamid);
+	    		console.log(data)
+
+	    		s.getPlayerAchievements({
+	    			gameid: 440,
+	    			steamid: req.user.id,
+	    			l: 'en',
+	    			callback: function(err,data) {
+	    				console.log(data);
+	    			}
+	    		})
+
+	    	}
+	    })
+**/
+
 	    res.redirect('/account/ListOfGames');
 	});
 	});
