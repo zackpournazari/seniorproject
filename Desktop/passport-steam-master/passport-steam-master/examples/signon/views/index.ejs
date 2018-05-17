@@ -1,5 +1,9 @@
+<!DOCTYPE html>
+<html>
+<body style="background-color:powderblue;">
+<center>
 <% if (!user) { %>
-	<h2>Welcome! Please log in.</h2>
+	<font size="6"><b>Welcome! Please log in.</b></font>
 	<p><a href="auth/steam"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_01.png"> </a></p>
 <% } else { %>
 	<h2>Hello, <%= user.displayName %>. - <a href='logout'>Logout</a></h2>
@@ -8,5 +12,7 @@
         <p><a href="/account/gamelist"><img src="https://images.cooltext.com/5133909.png"></a></p>
 
 <% } %>
-
+</center>
 	<!-- Should redirect to homepage if you're not logged in -->
+</body>
+</html>

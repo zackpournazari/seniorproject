@@ -1,13 +1,11 @@
+	//Packages that make the application possible
 	var express = require('express')
 	, passport = require('passport')
 	, util = require('util')
 	, session = require('express-session')
 	, SteamStrategy = require('../../').Strategy
 
-
-	var port = process.env.PORT; // 2. Using process.env.PORT
-
-	var SteamApi = require('steam-api');
+	var SteamApi = require('steam-api');//this is used to make parsing steam api info easier
 
 	var apiKey= '45189DA008A4684CF106ADDF8659BD25';
 	var request = require('request');
@@ -103,7 +101,8 @@
 
 		personanames = [];
 		gameList = [];
-		res.render('back', { user: req.user });
+		res.redirect('/');
+		//res.render('back', { user: req.user });
 	});
 
 
@@ -166,7 +165,8 @@
 
 	app.get('/account/ListOfGames', ensureAuthenticated, function(req, res){
 	//the completed array of game titles is returned and send to the res to be displayed on the html.
-	res.send(gameList);
+	//res.send(gameList);
+	res.render('gamelist', { games: gameList});
 	gameList = [];
 });
 
