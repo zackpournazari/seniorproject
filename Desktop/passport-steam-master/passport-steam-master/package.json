@@ -2,6 +2,7 @@
   "name": "passport-steam",
   "version": "1.0.9",
   "description": "Steam (OpenID) authentication strategy for Passport.",
+  "main": "./lib/passport-steam",
   "author": {
     "name": "Liam Curry",
     "email": "liam@curry.name",
@@ -29,7 +30,6 @@
   "bugs": {
     "url": "http://github.com/liamcurry/passport-steam/issues"
   },
-  "main": "./lib/passport-steam",
   "dependencies": {
     "npm": "^5.8.0",
     "passport-openid": "^0.4.0",
